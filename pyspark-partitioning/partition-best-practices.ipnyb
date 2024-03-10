@@ -1,0 +1,258 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "8e7eb1dc",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import findspark\n",
+    "findspark.init()\n",
+    "\n",
+    "from pyspark.sql import SparkSession"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "bc896c35",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "24/03/10 07:38:49 WARN Utils: Your hostname, Jagadeeshs-MacBook-Pro.local resolves to a loopback address: 127.0.0.1; using 192.168.1.33 instead (on interface en0)\n",
+      "24/03/10 07:38:49 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address\n",
+      "WARNING: An illegal reflective access operation has occurred\n",
+      "WARNING: Illegal reflective access by org.apache.spark.unsafe.Platform (file:/Users/jagadeesh/spark-3.2.4-bin-hadoop3.2/jars/spark-unsafe_2.12-3.2.4.jar) to constructor java.nio.DirectByteBuffer(long,int)\n",
+      "WARNING: Please consider reporting this to the maintainers of org.apache.spark.unsafe.Platform\n",
+      "WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations\n",
+      "WARNING: All illegal access operations will be denied in a future release\n",
+      "Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties\n",
+      "Setting default log level to \"WARN\".\n",
+      "To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).\n",
+      "24/03/10 07:38:49 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable\n"
+     ]
+    }
+   ],
+   "source": [
+    "spark = SparkSession.builder\\\n",
+    ".appName('partitioning')\\\n",
+    ".master('local[*]')\\\n",
+    ".getOrCreate()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "188f9f2e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "\n",
+       "            <div>\n",
+       "                <p><b>SparkSession - in-memory</b></p>\n",
+       "                \n",
+       "        <div>\n",
+       "            <p><b>SparkContext</b></p>\n",
+       "\n",
+       "            <p><a href=\"http://192.168.1.33:4040\">Spark UI</a></p>\n",
+       "\n",
+       "            <dl>\n",
+       "              <dt>Version</dt>\n",
+       "                <dd><code>v3.2.4</code></dd>\n",
+       "              <dt>Master</dt>\n",
+       "                <dd><code>local[*]</code></dd>\n",
+       "              <dt>AppName</dt>\n",
+       "                <dd><code>partitioning</code></dd>\n",
+       "            </dl>\n",
+       "        </div>\n",
+       "        \n",
+       "            </div>\n",
+       "        "
+      ],
+      "text/plain": [
+       "<pyspark.sql.session.SparkSession at 0x7fd748135be0>"
+      ]
+     },
+     "execution_count": 3,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "spark"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "b7f80cb1",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CPU times: user 2.54 ms, sys: 1.62 ms, total: 4.16 ms\n",
+      "Wall time: 118 ms\n"
+     ]
+    }
+   ],
+   "source": [
+    "%time AirlineDF = spark.read\\\n",
+    ".format('csv')\\\n",
+    ".option('path', '/Users/jagadeesh/Downloads/data')\\\n",
+    ".option('header', True)\\\n",
+    ".load()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "ebcdbaa6",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+----+-------+-----+----------+---------+----------+-------------+---------+-------+-------+---------+---------------+------------------+------------------+------+--------------+-----------+---------------+---------------+---------+-------------+----------------+----------------+----+----------------+---------+-------------+-------------+-------+----------+-------+--------+---------------+--------+--------------------+----------+-------+---------+--------+------+----------+-------+--------+---------------+--------+------------------+----------+---------+----------------+--------+--------------+-----------------+-------+-------+--------+-------------+------------+------------+--------+-------------+-----------------+------------+-------------+---------------+------------------+--------------+--------------------+-----------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+\n",
+      "|Year|Quarter|Month|DayofMonth|DayOfWeek|FlightDate|UniqueCarrier|AirlineID|Carrier|TailNum|FlightNum|OriginAirportID|OriginAirportSeqID|OriginCityMarketID|Origin|OriginCityName|OriginState|OriginStateFips|OriginStateName|OriginWac|DestAirportID|DestAirportSeqID|DestCityMarketID|Dest|    DestCityName|DestState|DestStateFips|DestStateName|DestWac|CRSDepTime|DepTime|DepDelay|DepDelayMinutes|DepDel15|DepartureDelayGroups|DepTimeBlk|TaxiOut|WheelsOff|WheelsOn|TaxiIn|CRSArrTime|ArrTime|ArrDelay|ArrDelayMinutes|ArrDel15|ArrivalDelayGroups|ArrTimeBlk|Cancelled|CancellationCode|Diverted|CRSElapsedTime|ActualElapsedTime|AirTime|Flights|Distance|DistanceGroup|CarrierDelay|WeatherDelay|NASDelay|SecurityDelay|LateAircraftDelay|FirstDepTime|TotalAddGTime|LongestAddGTime|DivAirportLandings|DivReachedDest|DivActualElapsedTime|DivArrDelay|DivDistance|Div1Airport|Div1AirportID|Div1AirportSeqID|Div1WheelsOn|Div1TotalGTime|Div1LongestGTime|Div1WheelsOff|Div1TailNum|Div2Airport|Div2AirportID|Div2AirportSeqID|Div2WheelsOn|Div2TotalGTime|Div2LongestGTime|Div2WheelsOff|Div2TailNum|Div3Airport|Div3AirportID|Div3AirportSeqID|Div3WheelsOn|Div3TotalGTime|Div3LongestGTime|Div3WheelsOff|Div3TailNum|Div4Airport|Div4AirportID|Div4AirportSeqID|Div4WheelsOn|Div4TotalGTime|Div4LongestGTime|Div4WheelsOff|Div4TailNum|Div5Airport|Div5AirportID|Div5AirportSeqID|Div5WheelsOn|Div5TotalGTime|Div5LongestGTime|Div5WheelsOff|Div5TailNum|\n",
+      "+----+-------+-----+----------+---------+----------+-------------+---------+-------+-------+---------+---------------+------------------+------------------+------+--------------+-----------+---------------+---------------+---------+-------------+----------------+----------------+----+----------------+---------+-------------+-------------+-------+----------+-------+--------+---------------+--------+--------------------+----------+-------+---------+--------+------+----------+-------+--------+---------------+--------+------------------+----------+---------+----------------+--------+--------------+-----------------+-------+-------+--------+-------------+------------+------------+--------+-------------+-----------------+------------+-------------+---------------+------------------+--------------+--------------------+-----------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+\n",
+      "|2007|      1|    1|         1|        1|2007-01-01|           9E|    20363|     9E| 85019E|     2800|          11278|           1127801|             30852|   DCA|Washington, DC|         VA|             51|       Virginia|       38|        11986|         1198602|           31986| GRR|Grand Rapids, MI|       MI|           26|     Michigan|     43|      2000|   2044|   44.00|          44.00|    1.00|                   2| 2000-2059|  36.00|     2120|    2255|  7.00|      2152|   2302|   70.00|          70.00|    1.00|                 4| 2100-2159|     0.00|            null|    0.00|        112.00|           138.00|  95.00|   1.00|  524.00|            3|        0.00|        0.00|   26.00|         0.00|            44.00|        null|         null|           null|              null|          null|                null|       null|       null|       null|         null|            null|        null|          null|            null|         null|       null|       null|         null|            null|        null|          null|            null|         null|       null|       null|         null|            null|        null|          null|            null|         null|       null|       null|         null|            null|        null|          null|            null|         null|       null|       null|         null|            null|        null|          null|            null|         null|       null|\n",
+      "+----+-------+-----+----------+---------+----------+-------------+---------+-------+-------+---------+---------------+------------------+------------------+------+--------------+-----------+---------------+---------------+---------+-------------+----------------+----------------+----+----------------+---------+-------------+-------------+-------+----------+-------+--------+---------------+--------+--------------------+----------+-------+---------+--------+------+----------+-------+--------+---------------+--------+------------------+----------+---------+----------------+--------+--------------+-----------------+-------+-------+--------+-------------+------------+------------+--------+-------------+-----------------+------------+-------------+---------------+------------------+--------------+--------------------+-----------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+-----------+-------------+----------------+------------+--------------+----------------+-------------+-----------+\n",
+      "only showing top 1 row\n",
+      "\n",
+      "CPU times: user 2.48 ms, sys: 2.3 ms, total: 4.78 ms\n",
+      "Wall time: 156 ms\n"
+     ]
+    }
+   ],
+   "source": [
+    "%time AirlineDF.show(1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "1d30c596",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CPU times: user 5.46 ms, sys: 4.45 ms, total: 9.91 ms\n",
+      "Wall time: 102 ms\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "[Row(Year='2007', Quarter='1', Month='1', DayofMonth='1', DayOfWeek='1', FlightDate='2007-01-01', UniqueCarrier='9E', AirlineID='20363', Carrier='9E', TailNum='85019E', FlightNum='2800', OriginAirportID='11278', OriginAirportSeqID='1127801', OriginCityMarketID='30852', Origin='DCA', OriginCityName='Washington, DC', OriginState='VA', OriginStateFips='51', OriginStateName='Virginia', OriginWac='38', DestAirportID='11986', DestAirportSeqID='1198602', DestCityMarketID='31986', Dest='GRR', DestCityName='Grand Rapids, MI', DestState='MI', DestStateFips='26', DestStateName='Michigan', DestWac='43', CRSDepTime='2000', DepTime='2044', DepDelay='44.00', DepDelayMinutes='44.00', DepDel15='1.00', DepartureDelayGroups='2', DepTimeBlk='2000-2059', TaxiOut='36.00', WheelsOff='2120', WheelsOn='2255', TaxiIn='7.00', CRSArrTime='2152', ArrTime='2302', ArrDelay='70.00', ArrDelayMinutes='70.00', ArrDel15='1.00', ArrivalDelayGroups='4', ArrTimeBlk='2100-2159', Cancelled='0.00', CancellationCode=None, Diverted='0.00', CRSElapsedTime='112.00', ActualElapsedTime='138.00', AirTime='95.00', Flights='1.00', Distance='524.00', DistanceGroup='3', CarrierDelay='0.00', WeatherDelay='0.00', NASDelay='26.00', SecurityDelay='0.00', LateAircraftDelay='44.00', FirstDepTime=None, TotalAddGTime=None, LongestAddGTime=None, DivAirportLandings=None, DivReachedDest=None, DivActualElapsedTime=None, DivArrDelay=None, DivDistance=None, Div1Airport=None, Div1AirportID=None, Div1AirportSeqID=None, Div1WheelsOn=None, Div1TotalGTime=None, Div1LongestGTime=None, Div1WheelsOff=None, Div1TailNum=None, Div2Airport=None, Div2AirportID=None, Div2AirportSeqID=None, Div2WheelsOn=None, Div2TotalGTime=None, Div2LongestGTime=None, Div2WheelsOff=None, Div2TailNum=None, Div3Airport=None, Div3AirportID=None, Div3AirportSeqID=None, Div3WheelsOn=None, Div3TotalGTime=None, Div3LongestGTime=None, Div3WheelsOff=None, Div3TailNum=None, Div4Airport=None, Div4AirportID=None, Div4AirportSeqID=None, Div4WheelsOn=None, Div4TotalGTime=None, Div4LongestGTime=None, Div4WheelsOff=None, Div4TailNum=None, Div5Airport=None, Div5AirportID=None, Div5AirportSeqID=None, Div5WheelsOn=None, Div5TotalGTime=None, Div5LongestGTime=None, Div5WheelsOff=None, Div5TailNum=None)]"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "%time AirlineDF.take(1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "cfff6682",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "[Stage 9:=================================>                       (13 + 8) / 22]\r"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "CPU times: user 3.44 ms, sys: 2.01 ms, total: 5.45 ms\n",
+      "Wall time: 1.22 s\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\r",
+      "[Stage 9:===================================================>     (20 + 2) / 22]\r",
+      "\r",
+      "                                                                                \r"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "5889652"
+      ]
+     },
+     "execution_count": 14,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "%time AirlineDF.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "dba692ab",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "109"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "len(AirlineDF.columns)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
